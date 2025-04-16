@@ -379,7 +379,7 @@
 						for (let j = 0; j < nums[i].length; j++) {
 							currNum = nums[i][j];
 							if (extraData[inds[i][j]] != "X") {
-								if (fracs[i][j] == 1) currNum = Math.floor(currNum/3);
+								if (fracs[i][j] == 1) currNum = currNum/3;
 								if (extraData[inds[i][j]] == "2") {
 									result += currNum*2;
 									debugString += " + "+currNum+" + "+currNum;
@@ -405,7 +405,7 @@
 						for (let j = 0; j < nums[i].length; j++) {
 							currNum = nums[i][j];
 							if (extraData[inds[i][j]] != "X") {
-								if (fracs[i][j] == 1) currNum = Math.floor(currNum/3);
+								if (fracs[i][j] == 1) currNum = currNum/3;
 								if (extraData[inds[i][j]] == "2") {
 									result -= currNum*2;
 									debugString += " - "+currNum+" - "+currNum;
@@ -431,7 +431,7 @@
 						for (let j = 0; j < nums[i].length; j++) {
 							currNum = nums[i][j];
 							if (extraData[inds[i][j]] != "X") {
-								if (fracs[i][j] == 1) currNum = Math.floor(currNum/3);
+								if (fracs[i][j] == 1) currNum = currNum/3;
 								if (extraData[inds[i][j]] == "2") {
 									result *= currNum*currNum;
 									debugString += " * "+currNum+" * "+currNum;
@@ -457,7 +457,7 @@
 						for (let j = 0; j < nums[i].length; j++) {
 							currNum = nums[i][j];
 							if (extraData[inds[i][j]] != "X") {
-								if (fracs[i][j] == 1) currNum = Math.floor(currNum/3);
+								if (fracs[i][j] == 1) currNum = currNum/3;
 								if (extraData[inds[i][j]] == "2") {
 									result /= currNum*currNum;
 									debugString += " / ("+currNum+" * "+currNum+")";
