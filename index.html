@@ -111,14 +111,8 @@
 					ctx.arc(250, 250, innerRadius, segment.endAngle, segment.startAngle);
 					ctx.closePath();
 					ctx.stroke();
-					if (segment.fractional == 1) {
-						fracRadius = (radii[segment.layer] + innerRadius)/2; // I know it's supposed to be 1/3 but meh I've never actually seen a picture of it in game
-						ctx.beginPath();
-						ctx.arc(250, 250, fracRadius, segment.startAngle, segment.endAngle);
-						ctx.arc(250, 250, innerRadius, segment.endAngle, segment.startAngle);
-					}
 					var color = segment.color
-					if (color == "#ffffff") {
+					if (color == "#ffffff" || segment.fractional == 1) {
 						// default colors
 						if (j % 2 == 0) {
 							if (i % 2 == 0) {
@@ -139,6 +133,15 @@
 					}
 					ctx.fillStyle = color;
 					ctx.fill();
+					if (segment.fractional == 1 && segment.color != "#ffffff") {
+						ctx.beginPath();
+						var tempStartAngle = segment.startAngle + Math.PI/30;
+						var tempEndAngle = segment.startAngle + Math.PI/15;
+						ctx.arc(250, 250, radii[segment.layer], tempStartAngle, tempEndAngle);
+						ctx.arc(250, 250, innerRadius, tempEndAngle, tempStartAngle);
+						ctx.fillStyle = segment.color;
+						ctx.fill();
+					}
 				}
 			}
 
