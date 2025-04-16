@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dart Puzzle Solver</title>
+    <style>
+        .dartboard {
+            width: 500px;
+            height: 500px;
+            border: 2px solid black;
+            position: relative;
+            margin: 50px auto;
+        }
+
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+        }
+
+		.button-container {
+            position: fixed;
+            top: 650px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        #result {
+            position: fixed;
+            top: 750px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+	<h1 align="center">Blue Prince Dart Puzzle Solver</h1>
+	<p align="center">Click segments to change colors, click side icons to set the bullseye operation, right click for fractional segments</p>
+    <div class="dartboard">
+        <canvas id="gameCanvas"></canvas>
+        <div class="numbers"></div>
+    </div>
+	<div class="button-container">
+		<button onclick="reset()">Reset</button>
+		</br>
+		<button onclick="solve()">Solve</button>
+	</div>
+    <p id="result"></p>
+
+    <script>
+        const colors = ['#ffffff', '#5caab5', '#e7dd84', '#e979b5', '#5f43ca'];
+		const radii = [100, 125, 180, 200, 240];
+        let colorIndex = 0;
+        const numbers = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const numbersContainer = document.querySelector('.numbers');
+		var data = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+		var fracData = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+		var extraData = ["","","","","","","","","","","","","","","","","","","",""];
+		var centerState = "";
+
+        let segments = [];
+
+        function createDartboard() {
+            canvas.width = 500;
+            canvas.height = 500;
+
+            // Draw the dartboard background
+			ctx.beginPath();
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, 500, 500);
+
+            // Draw the outer circle
+            ctx.beginPath();
+            ctx.arc(250, 250, 240, 0, Math.PI * 2);
+            ctx.strokeStyle = 'black';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+			
+			ctx.lineWidth = 2;
+
+            // Create segments
+			for (let j = 3; j >= 0; j--) {
+				for (let i = 0; i < numbers.length; i++) {
+					const segment = {
+						startAngle: (2*Math.PI - Math.PI / 2 - Math.PI/20 + (i * Math.PI) / 10) % (2 * Math.PI),
+						endAngle: (2*Math.PI - Math.PI / 2 - Math.PI/20 + ((i + 1) * Math.PI) / 10) % (2 * Math.PI),
+						color: colors[data[1+20*j+i]],
+						number: numbers[i],
+						layer: j,
+						fractional: fracData[20*j + i]
+					};
+
+					segments.push(segment);
+
+					// Draw the segment
+					ctx.beginPath();
+					ctx.arc(250, 250, radii[segment.layer], segment.startAngle, segment.endAngle);
+					//ctx.lineTo(250, 250);
+					let innerRadius = 20;
+					if (segment.layer > 0) innerRadius = radii[segment.layer-1];
+					ctx.arc(250, 250, innerRadius, segment.endAngle, segment.startAngle);
+					ctx.closePath();
+					ctx.stroke();
+					if (segment.fractional == 1) {
+						fracRadius = (radii[segment.layer] + innerRadius)/2; // I know it's supposed to be 1/3 but meh I've never actually seen a picture of it in game
+						ctx.beginPath();
+						ctx.arc(250, 250, fracRadius, segment.startAngle, segment.endAngle);
+						ctx.arc(250, 250, innerRadius, segment.endAngle, segment.startAngle);
+					}
+					var color = segment.color
+					if (color == "#ffffff") {
+						// default colors
+						if (j % 2 == 0) {
+							if (i % 2 == 0) {
+								color = "#000000";
+							}
+							else {
+								color = "#ffffff";
+							}
+						}
+						else {
+							if (i % 2 == 0) {
+								color = "#aaaaaa";
+							}
+							else {
+								color = "#444444";
+							}
+						}
+					}
+					ctx.fillStyle = color;
+					ctx.fill();
+				}
+			}
+
+            // Draw the numbers
+			
+			var i = 0;
+            segments.forEach(segment => {
+                if (segment.number > 0) {
+                    const angle = segment.startAngle + Math.PI/20; //(segment.startAngle + segment.endAngle) / 2; // This caused issues with signs for one of them
+                    var x = (235 * Math.cos(angle) + 250) - 20 * Math.cos(angle);
+                    var y = (235 * Math.sin(angle) + 250) - 20 * Math.sin(angle);
+					ctx.fillStyle = "black";
+					ctx.font = "24px serif";
+					ctx.beginPath();
+					// These positions aren't great because of the differing lengths of the numbers
+					ctx.fillText(""+segment.number, x-13, y+5);
+					if (i < 20 && extraData[i] != "") {
+						x = (250 * Math.cos(angle) + 250) - 20 * Math.cos(angle);
+						y = (250 * Math.sin(angle) + 250) - 20 * Math.sin(angle);
+						ctx.fillStyle = "red";
+						ctx.font = "32px serif";
+						ctx.beginPath();
+						ctx.fillText(extraData[i], x-10, y+5);
+					}
+					i++;
+                }
+            });
+
+            // Draw the bullseye
+            ctx.beginPath();
+            ctx.arc(250, 250, 20, 0, Math.PI * 2);
+			//ctx.closePath();
+			ctx.stroke();
+            ctx.fillStyle = colors[data[0]];
+            ctx.fill();
+			
+			// Draw side options..?
+			// Square, diamond, 1-3 wavy lines
+			// Probably best to just use text tbh
+			ctx.beginPath();
+			ctx.fillStyle = "black";
+			ctx.font = "48px serif";
+			ctx.fillText("□", 22, 40);
+			ctx.beginPath();
+			ctx.font = "40px serif";
+			ctx.fillText("◇", 20, 80);
+			
+			ctx.beginPath();
+			ctx.fillText("~", 20, 425);
+			ctx.beginPath();
+			ctx.fillText("≈", 20, 455);
+			ctx.beginPath();
+			ctx.fillText("≋", 16, 485);
+			
+			// Center state
+			if (centerState == "square") {
+				ctx.beginPath();
+				ctx.font = "48px serif";
+				ctx.fillText("□", 236, 261);
+			}
+			else if (centerState == "diamond") {
+				ctx.beginPath();
+				ctx.font = "40px serif";
+				ctx.fillText("◇", 234, 265);
+			}
+			else if (centerState == "round1") {
+				ctx.beginPath();
+				ctx.font = "40px serif";
+				ctx.fillText("~", 240, 260);
+			}
+			else if (centerState == "round2") {
+				ctx.beginPath();
+				ctx.font = "40px serif";
+				ctx.fillText("≈", 240, 264);
+			}
+			else if (centerState == "round3") {
+				ctx.beginPath();
+				ctx.font = "40px serif";
+				ctx.fillText("≋", 235, 260);
+			}
+			
+        }
+		
+		
+		function getSegment(x, y) {
+			var angle = Math.atan2(y - 250, x - 250);
+            if (angle < 0) angle += 2 * Math.PI;
+			var radius = Math.sqrt((x - 250)*(x - 250) + (y - 250)*(y - 250));
+
+			var layer = -1;
+			if (radius > 20) {
+				for (let i = 0; i < radii.length; i++) {
+					if (radius <= radii[i]) {
+						layer = i;
+						break;
+					}
+				}
+			}
+			if (radius > 240) {
+				return -1;
+			}
+			
+			if (layer >= 0) {
+				let index = (20 + Math.floor(10*(Math.PI/20 - angle)/Math.PI)) % 20;
+				let actualIndex = (20 + 5 - index)%20;
+				return 1 + 20*layer + actualIndex;
+			}
+			else {
+				return 0;
+			}
+		}
+
+        function toggleColor(event) {
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+			
+			const index = getSegment(x, y);
+			if (index >= 0 && index < 1 + 20*4) {
+				data[index] = (data[index] + 1) % colors.length;
+			}
+			
+			// Outside edge
+			if (index >= 1 + 20*4) {
+				outerIndex = index - 1 - 20*4;
+				extraData[outerIndex] = getNextExtraOption(extraData[outerIndex]);
+			}
+			
+			// Special center symbols
+			if (x < 60) {
+				if (y < 45) {
+					centerState = (centerState == "square") ? "" : "square";
+				}
+				else if (y < 90) {
+					centerState = (centerState == "diamond") ? "" : "diamond";
+				}
+				else if (y > 400) {
+					if (y < 425) {
+						centerState = (centerState == "round1") ? "" : "round1";
+					}
+					else if (y < 460) {
+						centerState = (centerState == "round2") ? "" : "round2";
+					}
+					else {
+						centerState = (centerState == "round3") ? "" : "round3";
+					}
+				}
+			}
+			
+			ctx.clearRect(0, 0, 500, 500);
+			createDartboard();
+			return;
+        }
+		
+		function toggleFractional(event) {
+			event.preventDefault();
+			const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+			
+			const index = getSegment(x, y);
+			if (index > 0) {
+				fracData[index-1] = (fracData[index-1] + 1)%2;
+			}
+			
+			ctx.clearRect(0, 0, 500, 500);
+			createDartboard();
+			return;
+		}
+		
+		function getNextExtraOption(option) {
+			if (option == "") {
+				return "2";
+			}
+			else if (option == "2") {
+				return "3";
+			}
+			else if (option == "3") {
+				return "X";
+			}
+			// Not sure how many dots there can be, or whether there are other symbols here
+			else if (option == "X") {
+				return "/";
+			}
+			else if (option == "/") {
+				return "";
+			}
+		}
+		
+		function reset() {
+			data = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+			fracData = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+			extraData = ["","","","","","","","","","","","","","","","","","","",""];
+			centerState = "";
+			ctx.clearRect(0, 0, 500, 500);
+			createDartboard();
+			return;
+		}
+
+        function solve() {
+            let valid = true; // Is it ever invalid?
+			let inds = [[], [], [], []];
+			let nums = [[], [], [], []];
+			let fracs = [[], [], [], []];
+			let values = [0, 0, 0, 0, 0];
+
+			//if (data[0] == 0) valid = false;
+			values[0] = data[0];
+			if (values[0] != 0 && centerState == "") valid = false;
+			for (let layer = 0; layer < 4; layer++) {
+				let count = 0;
+				for (let i = 0; i < 20; i++) {
+					if (data[1 + 20*layer + i] != 0) {
+						count++;
+						// If there's more than one color in a layer then it doesn't really make sense... right?
+						if (values[1+layer] != 0 && values[1+layer] != data[1 + 20*layer + i]) valid = false;
+						values[1+layer] = data[1 + 20*layer + i];
+						inds[layer].push(i);
+						nums[layer].push(numbers[i]);
+						fracs[layer].push(fracData[20*layer + i]);
+					}
+				}
+				//if (count != 1) valid = false;
+			}
+
+            if (valid) {
+				// Do the actual math lol
+				console.log(nums);
+				console.log(values);
+				// Values: 1 = addition, 2 = subtraction, 3 = multiplication, 4 = division
+				var debugString = "0";
+				var result = 0;
+				for (let i = 0; i < 4; i++) {
+					if (values[1+i] == 1) { // Addition
+						for (let j = 0; j < nums[i].length; j++) {
+							currNum = nums[i][j];
+							if (extraData[inds[i][j]] != "X") {
+								if (fracs[i][j] == 1) currNum = Math.floor(currNum/3);
+								if (extraData[inds[i][j]] == "2") {
+									result += currNum*2;
+									debugString += " + "+currNum+" + "+currNum;
+								}
+								else if (extraData[inds[i][j]] == "3") {
+									result += currNum*3;
+									debugString += " + "+currNum+" + "+currNum+" + "+currNum;
+								}
+								else if (extraData[inds[i][j]] == "/") {
+									result += currNum/2;
+									debugString += " + "+currNum+"/2";
+								}
+								else {
+									// Normal operation
+									result += currNum;
+									debugString += " + "+currNum;
+								}
+							}
+						}
+						debugString = "(" + debugString + ")";
+					}
+					else if (values[1+i] == 2) { // Subtraction
+						for (let j = 0; j < nums[i].length; j++) {
+							currNum = nums[i][j];
+							if (extraData[inds[i][j]] != "X") {
+								if (fracs[i][j] == 1) currNum = Math.floor(currNum/3);
+								if (extraData[inds[i][j]] == "2") {
+									result -= currNum*2;
+									debugString += " - "+currNum+" - "+currNum;
+								}
+								else if (extraData[inds[i][j]] == "3") {
+									result -= currNum*3;
+									debugString += " - "+currNum+" - "+currNum+" - "+currNum;
+								}
+								else if (extraData[inds[i][j]] == "/") {
+									result -= currNum/2;
+									debugString += " - "+currNum+"/2";
+								}
+								else {
+									// Normal operation
+									result -= currNum;
+									debugString += " - "+currNum;
+								}
+							}
+						}
+						debugString = "(" + debugString + ")";
+					}
+					else if (values[1+i] == 3) { // Multiplication
+						for (let j = 0; j < nums[i].length; j++) {
+							currNum = nums[i][j];
+							if (extraData[inds[i][j]] != "X") {
+								if (fracs[i][j] == 1) currNum = Math.floor(currNum/3);
+								if (extraData[inds[i][j]] == "2") {
+									result *= currNum*currNum;
+									debugString += " * "+currNum+" * "+currNum;
+								}
+								else if (extraData[inds[i][j]] == "3") {
+									result *= currNum*currNum*currNum;
+									debugString += " * "+currNum+" * "+currNum+" * "+currNum;
+								}
+								else if (extraData[inds[i][j]] == "/") {
+									result *= currNum/2;
+									debugString += " * "+currNum+"/2";
+								}
+								else {
+									// Normal operation
+									result *= currNum;
+									debugString += " * "+currNum;
+								}
+							}
+						}
+						debugString = "(" + debugString + ")";
+					}
+					else if (values[1+i] == 4) { // Division
+						for (let j = 0; j < nums[i].length; j++) {
+							currNum = nums[i][j];
+							if (extraData[inds[i][j]] != "X") {
+								if (fracs[i][j] == 1) currNum = Math.floor(currNum/3);
+								if (extraData[inds[i][j]] == "2") {
+									result /= currNum*currNum;
+									debugString += " / ("+currNum+" * "+currNum+")";
+								}
+								else if (extraData[inds[i][j]] == "3") {
+									result /= currNum*currNum*currNum;
+									debugString += " / ("+currNum+" * "+currNum+" * "+currNum+")";
+								}
+								else if (extraData[inds[i][j]] == "/") {
+									result /= currNum/2;
+									debugString += " / ("+currNum+"/2)";
+								}
+								else {
+									// Normal operation
+									result /= currNum;
+									debugString += " / "+currNum;
+								}
+							}
+						}
+						debugString = "(" + debugString + ")";
+					}
+					if (values[0] != 0 && values[i+1] == values[0]) { // square... or swap... or something else
+						if (centerState == "square") {
+							result *= result;
+							debugString = "(" + debugString + ")^2";
+						}
+						else if (centerState == "diamond") {
+							// Reverse the number... This converts 23 -> 32 but also works for 3-digit numbers, not sure if that's ever used in the puzzle though
+							result = parseInt(result.toString().split('').reverse().join(''), 10);
+							debugString = "swap(" + debugString + ")";
+						}
+						else if (centerState == "round1") {
+							// TODO: "round to the nearest 1 digit number"... not sure what this means if the current value is 2 or 3 digits
+							result = Math.round(result);
+							debugString = "round1(" + debugString + ")";
+						}
+						else if (centerState == "round2") {
+							// TODO: "round to the nearest 2 digit number"... like nearest multiple of 10?
+							result = Math.round(result/10)*10;
+							debugString = "round2(" + debugString + ")";
+						}
+						else if (centerState == "round3") {
+							// TODO: "round to the nearest 3 digit number"... like nearest multiple of 100?
+							result = Math.round(result/100)*100;
+							debugString = "round3(" + debugString + ")";
+						}
+					}
+				}
+				var info = "";
+				if (result > 20 || result <= 0 || result % 1 != 0) info = "... uh that doesn't seem right";
+				document.getElementById('result').textContent = debugString + " = " + result + " " + info;
+				
+            } else {
+                document.getElementById('result').textContent = 'Please ensure each segment is highlighted properly.';
+            }
+        }
+
+        canvas.addEventListener('click', toggleColor);
+		canvas.addEventListener('contextmenu', toggleFractional);
+        createDartboard();
+    </script>
+</body>
+</html>
