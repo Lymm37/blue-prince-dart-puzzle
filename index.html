@@ -67,6 +67,7 @@
 		var fracData = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 		var extraData = ["","","","","","","","","","","","","","","","","","","",""];
 		var centerState = "";
+		var roundState = "";
 
         let segments = [];
 
@@ -189,38 +190,48 @@
 			ctx.font = "40px serif";
 			ctx.fillText("◇", 20, 80);
 			
+			ctx.font = "36px serif";
 			ctx.beginPath();
-			ctx.fillText("~", 20, 425);
+			ctx.fillText("~×2", 5, 425);
 			ctx.beginPath();
-			ctx.fillText("≈", 20, 455);
+			ctx.fillText("≈×2", 5, 455);
 			ctx.beginPath();
-			ctx.fillText("≋", 16, 485);
+			ctx.fillText("≋×2", 1, 485);
 			
 			// Center state
 			if (centerState == "square") {
 				ctx.beginPath();
-				ctx.font = "48px serif";
-				ctx.fillText("□", 236, 261);
+				ctx.font = "32px serif";
+				ctx.fillText("□", 240, 258);
 			}
 			else if (centerState == "diamond") {
 				ctx.beginPath();
-				ctx.font = "40px serif";
-				ctx.fillText("◇", 234, 265);
+				ctx.font = "30px serif";
+				ctx.fillText("◇", 237, 261);
 			}
-			else if (centerState == "round1") {
+			if (roundState == "round1") {
 				ctx.beginPath();
 				ctx.font = "40px serif";
-				ctx.fillText("~", 240, 260);
+				ctx.fillText("~", 240, 248);
+				ctx.fillText("~", 240, 272);
 			}
-			else if (centerState == "round2") {
+			else if (roundState == "round2") {
 				ctx.beginPath();
 				ctx.font = "40px serif";
-				ctx.fillText("≈", 240, 264);
+				ctx.fillText("~", 240, 245);
+				ctx.fillText("~", 240, 250);
+				ctx.fillText("~", 240, 270);
+				ctx.fillText("~", 240, 275);
 			}
-			else if (centerState == "round3") {
+			else if (roundState == "round3") {
 				ctx.beginPath();
 				ctx.font = "40px serif";
-				ctx.fillText("≋", 235, 260);
+				ctx.fillText("~", 240, 245);
+				ctx.fillText("~", 240, 249);
+				ctx.fillText("~", 240, 253);
+				ctx.fillText("~", 240, 267);
+				ctx.fillText("~", 240, 271);
+				ctx.fillText("~", 240, 275);
 			}
 			
         }
@@ -271,7 +282,7 @@
 			}
 			
 			// Special center symbols
-			if (x < 60) {
+			if (x < 70) {
 				if (y < 45) {
 					centerState = (centerState == "square") ? "" : "square";
 				}
@@ -280,13 +291,13 @@
 				}
 				else if (y > 400) {
 					if (y < 425) {
-						centerState = (centerState == "round1") ? "" : "round1";
+						roundState = (roundState == "round1") ? "" : "round1";
 					}
 					else if (y < 460) {
-						centerState = (centerState == "round2") ? "" : "round2";
+						roundState = (roundState == "round2") ? "" : "round2";
 					}
 					else {
-						centerState = (centerState == "round3") ? "" : "round3";
+						roundState = (roundState == "round3") ? "" : "round3";
 					}
 				}
 			}
@@ -305,6 +316,12 @@
 			const index = getSegment(x, y);
 			if (index > 0) {
 				fracData[index-1] = (fracData[index-1] + 1)%2;
+			}
+			
+			// Outside edge
+			if (index >= 1 + 20*4) {
+				outerIndex = index - 1 - 20*4;
+				extraData[outerIndex] = getNextExtraOptionRightClick(extraData[outerIndex]);
 			}
 			
 			ctx.clearRect(0, 0, 500, 500);
@@ -331,11 +348,27 @@
 			}
 		}
 		
+		function getNextExtraOptionRightClick(option) {
+			if (option == "") {
+				return "X";
+			}
+			else if (option == "X") {
+				return "/";
+			}
+			else if (option == "/") {
+				return "";
+			}
+			else {
+				return "X";
+			}
+		}
+		
 		function reset() {
 			data = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 			fracData = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 			extraData = ["","","","","","","","","","","","","","","","","","","",""];
 			centerState = "";
+			roundState = "";
 			ctx.clearRect(0, 0, 500, 500);
 			createDartboard();
 			return;
@@ -350,7 +383,7 @@
 
 			//if (data[0] == 0) valid = false;
 			values[0] = data[0];
-			if (values[0] != 0 && centerState == "") valid = false;
+			if (values[0] != 0 && centerState == "" && roundState == "") valid = false;
 			for (let layer = 0; layer < 4; layer++) {
 				let count = 0;
 				for (let i = 0; i < 20; i++) {
@@ -480,6 +513,7 @@
 						debugString = "(" + debugString + ")";
 					}
 					if (values[0] != 0 && values[i+1] == values[0]) { // square... or swap... or something else
+						// Square / diamond
 						if (centerState == "square") {
 							result *= result;
 							debugString = "(" + debugString + ")^2";
@@ -489,17 +523,18 @@
 							result = parseInt(result.toString().split('').reverse().join(''), 10);
 							debugString = "swap(" + debugString + ")";
 						}
-						else if (centerState == "round1") {
+						// Rounding
+						if (roundState == "round1") {
 							// TODO: "round to the nearest 1 digit number"... not sure what this means if the current value is 2 or 3 digits
 							result = Math.round(result);
 							debugString = "round1(" + debugString + ")";
 						}
-						else if (centerState == "round2") {
+						else if (roundState == "round2") {
 							// TODO: "round to the nearest 2 digit number"... like nearest multiple of 10?
 							result = Math.round(result/10)*10;
 							debugString = "round2(" + debugString + ")";
 						}
-						else if (centerState == "round3") {
+						else if (roundState == "round3") {
 							// TODO: "round to the nearest 3 digit number"... like nearest multiple of 100?
 							result = Math.round(result/100)*100;
 							debugString = "round3(" + debugString + ")";
