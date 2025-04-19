@@ -68,6 +68,7 @@
 		var extraData = ["","","","","","","","","","","","","","","","","","","",""];
 		var centerState = "";
 		var roundState = "";
+		var outerCenterState = "";
 
         let segments = [];
 
@@ -185,10 +186,22 @@
 			ctx.beginPath();
 			ctx.fillStyle = "black";
 			ctx.font = "48px serif";
-			ctx.fillText("□", 22, 40);
+			ctx.fillText("□", 23, 40);
 			ctx.beginPath();
 			ctx.font = "40px serif";
 			ctx.fillText("◇", 20, 80);
+			ctx.font = "20px serif";
+			ctx.fillText("(inner)", 2, 100);
+			
+			ctx.beginPath();
+			ctx.fillStyle = "black";
+			ctx.font = "48px serif";
+			ctx.fillText("□", 452, 40);
+			ctx.beginPath();
+			ctx.font = "40px serif";
+			ctx.fillText("◇", 450, 80);
+			ctx.font = "20px serif";
+			ctx.fillText("(outer)", 440, 100);
 			
 			ctx.font = "36px serif";
 			ctx.beginPath();
@@ -198,7 +211,7 @@
 			ctx.beginPath();
 			ctx.fillText("≋×2", 1, 485);
 			
-			// Center state
+			// Inner center state
 			if (centerState == "square") {
 				ctx.beginPath();
 				ctx.font = "32px serif";
@@ -207,31 +220,42 @@
 			else if (centerState == "diamond") {
 				ctx.beginPath();
 				ctx.font = "30px serif";
-				ctx.fillText("◇", 237, 261);
+				ctx.fillText("◇", 238, 261);
 			}
 			if (roundState == "round1") {
 				ctx.beginPath();
-				ctx.font = "40px serif";
-				ctx.fillText("~", 240, 248);
-				ctx.fillText("~", 240, 272);
+				ctx.font = "36px serif";
+				ctx.fillText("~", 240, 250);
+				ctx.fillText("~", 240, 270);
 			}
 			else if (roundState == "round2") {
 				ctx.beginPath();
-				ctx.font = "40px serif";
-				ctx.fillText("~", 240, 245);
+				ctx.font = "36px serif";
+				ctx.fillText("~", 240, 246);
 				ctx.fillText("~", 240, 250);
 				ctx.fillText("~", 240, 270);
-				ctx.fillText("~", 240, 275);
+				ctx.fillText("~", 240, 274);
 			}
 			else if (roundState == "round3") {
 				ctx.beginPath();
-				ctx.font = "40px serif";
+				ctx.font = "36px serif";
 				ctx.fillText("~", 240, 245);
 				ctx.fillText("~", 240, 249);
 				ctx.fillText("~", 240, 253);
 				ctx.fillText("~", 240, 267);
 				ctx.fillText("~", 240, 271);
 				ctx.fillText("~", 240, 275);
+			}
+			// Outer center state
+			if (outerCenterState == "square") {
+				ctx.beginPath();
+				ctx.font = "64px serif";
+				ctx.fillText("□", 231, 265);
+			}
+			else if (outerCenterState == "diamond") {
+				ctx.beginPath();
+				ctx.font = "64px serif";
+				ctx.fillText("◇", 224, 272);
 			}
 			
         }
@@ -299,6 +323,14 @@
 					else {
 						roundState = (roundState == "round3") ? "" : "round3";
 					}
+				}
+			}
+			if (x > 430) {
+				if (y < 45) {
+					outerCenterState = (outerCenterState == "square") ? "" : "square";
+				}
+				else if (y < 90) {
+					outerCenterState = (outerCenterState == "diamond") ? "" : "diamond";
 				}
 			}
 			
@@ -369,8 +401,10 @@
 			extraData = ["","","","","","","","","","","","","","","","","","","",""];
 			centerState = "";
 			roundState = "";
+			outerCenterState = "";
 			ctx.clearRect(0, 0, 500, 500);
 			createDartboard();
+			document.getElementById('result').textContent = "";
 			return;
 		}
 
@@ -383,7 +417,7 @@
 
 			//if (data[0] == 0) valid = false;
 			values[0] = data[0];
-			if (values[0] != 0 && centerState == "" && roundState == "") valid = false;
+			if (values[0] != 0 && centerState == "" && roundState == "" && outerCenterState == "") valid = false;
 			for (let layer = 0; layer < 4; layer++) {
 				let count = 0;
 				for (let i = 0; i < 20; i++) {
@@ -538,6 +572,15 @@
 							// TODO: "round to the nearest 3 digit number"... like nearest multiple of 100?
 							result = Math.round(result/100)*100;
 							debugString = "round3(" + debugString + ")";
+						}
+						// Yet another square/diamond
+						if (outerCenterState == "square") {
+							result *= result;
+							debugString = "(" + debugString + ")^2";
+						}
+						else if (outerCenterState == "diamond") {
+							result = parseInt(result.toString().split('').reverse().join(''), 10);
+							debugString = "swap(" + debugString + ")";
 						}
 					}
 				}
