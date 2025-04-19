@@ -421,7 +421,7 @@
 			for (let layer = 0; layer < 4; layer++) {
 				let count = 0;
 				for (let i = 0; i < 20; i++) {
-					if (data[1 + 20*layer + i] != 0) {
+					if (extraData[i] != "X" && data[1 + 20*layer + i] != 0) {
 						count++;
 						// If there's more than one color in a layer then it doesn't really make sense... right?
 						if (values[1+layer] != 0 && values[1+layer] != data[1 + 20*layer + i]) valid = false;
