@@ -449,11 +449,11 @@
 								if (fracs[i][j] == 1) currNum = currNum/3;
 								if (extraData[inds[i][j]] == "2") {
 									result += currNum*2;
-									debugString += " + "+currNum+" + "+currNum;
+									debugString += " + "+currNum+"*2";
 								}
 								else if (extraData[inds[i][j]] == "3") {
 									result += currNum*3;
-									debugString += " + "+currNum+" + "+currNum+" + "+currNum;
+									debugString += " + "+currNum+"*3";
 								}
 								else if (extraData[inds[i][j]] == "/") {
 									result += currNum/2;
@@ -475,11 +475,11 @@
 								if (fracs[i][j] == 1) currNum = currNum/3;
 								if (extraData[inds[i][j]] == "2") {
 									result -= currNum*2;
-									debugString += " - "+currNum+" - "+currNum;
+									debugString += " - "+currNum+"*2";
 								}
 								else if (extraData[inds[i][j]] == "3") {
 									result -= currNum*3;
-									debugString += " - "+currNum+" - "+currNum+" - "+currNum;
+									debugString += " - "+currNum+"*3";
 								}
 								else if (extraData[inds[i][j]] == "/") {
 									result -= currNum/2;
@@ -500,12 +500,12 @@
 							if (extraData[inds[i][j]] != "X") {
 								if (fracs[i][j] == 1) currNum = currNum/3;
 								if (extraData[inds[i][j]] == "2") {
-									result *= currNum*currNum;
-									debugString += " * "+currNum+" * "+currNum;
+									result *= currNum*2;
+									debugString += " * "+currNum+"*2";
 								}
 								else if (extraData[inds[i][j]] == "3") {
-									result *= currNum*currNum*currNum;
-									debugString += " * "+currNum+" * "+currNum+" * "+currNum;
+									result *= currNum*3;
+									debugString += " * "+currNum+"*3";
 								}
 								else if (extraData[inds[i][j]] == "/") {
 									result *= currNum/2;
@@ -526,12 +526,12 @@
 							if (extraData[inds[i][j]] != "X") {
 								if (fracs[i][j] == 1) currNum = currNum/3;
 								if (extraData[inds[i][j]] == "2") {
-									result /= currNum*currNum;
-									debugString += " / ("+currNum+" * "+currNum+")";
+									result /= currNum*2;
+									debugString += " / ("+currNum+"*2)";
 								}
 								else if (extraData[inds[i][j]] == "3") {
-									result /= currNum*currNum*currNum;
-									debugString += " / ("+currNum+" * "+currNum+" * "+currNum+")";
+									result /= currNum*3;
+									debugString += " / ("+currNum+"*3)";
 								}
 								else if (extraData[inds[i][j]] == "/") {
 									result /= currNum/2;
@@ -579,7 +579,7 @@
 							debugString = "(" + debugString + ")^2";
 						}
 						else if (outerCenterState == "diamond") {
-							result = parseInt(result.toString().split('').reverse().join(''), 10);
+							result = parseFloat(result.toString().split('').reverse().join(''), 10);
 							debugString = "swap(" + debugString + ")";
 						}
 					}
