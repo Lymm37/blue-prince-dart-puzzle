@@ -17,43 +17,37 @@
             position: absolute;
         }
 
-		.button-container {
-            position: fixed;
-            top: 650px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
         button {
             padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
             margin: 5px;
         }
-
-        #result {
-            position: fixed;
-            top: 750px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 24px;
-            color: #333;
-        }
+		
+		p {
+			text-align: center;
+			font-size: 24px;
+		}
     </style>
 </head>
 <body>
 	<h1 align="center">Blue Prince Dart Puzzle Solver</h1>
-	<p align="center">Click segments to change colors, click side icons to set the bullseye operation, right click for fractional segments</p>
+	<p>Click segments to cycle through colors, click side icons to toggle the bullseye operation, right-click to toggle fractional segments, click/right-click outer rim to cycle through those options. Outer diamond not yet supported, sorry</p>
     <div class="dartboard">
         <canvas id="gameCanvas"></canvas>
         <div class="numbers"></div>
     </div>
-	<div class="button-container">
+	<div align="center">
 		<button onclick="reset()">Reset</button>
 		</br>
 		<button onclick="solve()">Solve</button>
 	</div>
+	</br>
     <p id="result"></p>
+	<p id="step0"></p>
+	<p id="step1"></p>
+	<p id="step2"></p>
+	<p id="step3"></p>
 
     <script>
         const colors = ['#ffffff', '#5caab5', '#e7dd84', '#e979b5', '#5f43ca'];
@@ -372,6 +366,7 @@
 				return "X";
 			}
 			// Not sure how many dots there can be, or whether there are other symbols here
+			// Diamond (and slashed diamond) is an option here but I've seen inconsistent examples with it, so I'll implement it when I'm sure what it's supposed to do
 			else if (option == "X") {
 				return "/";
 			}
@@ -405,6 +400,9 @@
 			ctx.clearRect(0, 0, 500, 500);
 			createDartboard();
 			document.getElementById('result').textContent = "";
+			for (let i = 0; i < 4; i++) {
+				document.getElementById('step'+i).textContent = "";
+			}
 			return;
 		}
 
@@ -413,22 +411,25 @@
 			let inds = [[], [], [], []];
 			let nums = [[], [], [], []];
 			let fracs = [[], [], [], []];
-			let values = [0, 0, 0, 0, 0];
+			let values = [0, [], [], [], []];
 
 			//if (data[0] == 0) valid = false;
 			values[0] = data[0];
 			if (values[0] != 0 && centerState == "" && roundState == "" && outerCenterState == "") valid = false;
 			for (let layer = 0; layer < 4; layer++) {
 				let count = 0;
-				for (let i = 0; i < 20; i++) {
-					if (extraData[i] != "X" && data[1 + 20*layer + i] != 0) {
-						count++;
-						// If there's more than one color in a layer then it doesn't really make sense... right?
-						if (values[1+layer] != 0 && values[1+layer] != data[1 + 20*layer + i]) valid = false;
-						values[1+layer] = data[1 + 20*layer + i];
-						inds[layer].push(i);
-						nums[layer].push(numbers[i]);
-						fracs[layer].push(fracData[20*layer + i]);
+				// Order by operation within each ring...
+				for (let v = 1; v < 5; v++) {
+					for (let i = 0; i < 20; i++) {
+						if (extraData[i] != "X" && data[1 + 20*layer + i] == v) {
+							count++;
+							// If there's more than one color in a layer then it doesn't really make sense... right?
+							// if (values[1+layer] != 0 && values[1+layer] != data[1 + 20*layer + i]) valid = false;
+							values[1+layer].push(v);
+							inds[layer].push(i);
+							nums[layer].push(numbers[i]);
+							fracs[layer].push(fracData[20*layer + i]);
+						}
 					}
 				}
 				//if (count != 1) valid = false;
@@ -436,157 +437,164 @@
 
             if (valid) {
 				// Do the actual math lol
-				console.log(nums);
-				console.log(values);
+				//console.log(nums);
+				//console.log(values);
 				// Values: 1 = addition, 2 = subtraction, 3 = multiplication, 4 = division
 				var debugString = "0";
 				var result = 0;
 				for (let i = 0; i < 4; i++) {
-					if (values[1+i] == 1) { // Addition
-						for (let j = 0; j < nums[i].length; j++) {
-							currNum = nums[i][j];
+					var stepDebugString = ""+result;
+					for (let j = 0; j < nums[i].length; j++) {
+						let currValue = values[1+i][j];
+						let currNum = nums[i][j];
+						let currRep = ""+currNum;
+						if (currValue == 1) { // Addition
 							if (extraData[inds[i][j]] != "X") {
-								if (fracs[i][j] == 1) currNum = currNum/3;
+								if (fracs[i][j] == 1) {
+									currNum = currNum/3;
+									currRep = currRep + "/3";
+								}
 								if (extraData[inds[i][j]] == "2") {
 									result += currNum*2;
-									debugString += " + "+currNum+"*2";
+									stepDebugString += " + "+currRep+"*2";
 								}
 								else if (extraData[inds[i][j]] == "3") {
 									result += currNum*3;
-									debugString += " + "+currNum+"*3";
+									stepDebugString += " + "+currRep+"*3";
 								}
 								else if (extraData[inds[i][j]] == "/") {
 									result += currNum/2;
-									debugString += " + "+currNum+"/2";
+									stepDebugString += " + "+currRep+"/2";
 								}
 								else {
 									// Normal operation
 									result += currNum;
-									debugString += " + "+currNum;
+									stepDebugString += " + "+currRep;
 								}
 							}
 						}
-						debugString = "(" + debugString + ")";
-					}
-					else if (values[1+i] == 2) { // Subtraction
-						for (let j = 0; j < nums[i].length; j++) {
-							currNum = nums[i][j];
+						else if (currValue == 2) { // Subtraction
 							if (extraData[inds[i][j]] != "X") {
-								if (fracs[i][j] == 1) currNum = currNum/3;
+								if (fracs[i][j] == 1) {
+									currNum = currNum/3;
+									currRep = currRep + "/3";
+								}
 								if (extraData[inds[i][j]] == "2") {
 									result -= currNum*2;
-									debugString += " - "+currNum+"*2";
+									stepDebugString += " - "+currRep+"*2";
 								}
 								else if (extraData[inds[i][j]] == "3") {
 									result -= currNum*3;
-									debugString += " - "+currNum+"*3";
+									stepDebugString += " - "+currRep+"*3";
 								}
 								else if (extraData[inds[i][j]] == "/") {
 									result -= currNum/2;
-									debugString += " - "+currNum+"/2";
+									stepDebugString += " - "+currRep+"/2";
 								}
 								else {
 									// Normal operation
 									result -= currNum;
-									debugString += " - "+currNum;
+									stepDebugString += " - "+currRep;
 								}
 							}
 						}
-						debugString = "(" + debugString + ")";
-					}
-					else if (values[1+i] == 3) { // Multiplication
-						for (let j = 0; j < nums[i].length; j++) {
-							currNum = nums[i][j];
+						else if (currValue == 3) { // Multiplication
 							if (extraData[inds[i][j]] != "X") {
-								if (fracs[i][j] == 1) currNum = currNum/3;
+								if (fracs[i][j] == 1) {
+									currNum = currNum/3;
+									currRep = currRep + "/3";
+								}
 								if (extraData[inds[i][j]] == "2") {
 									result *= currNum*2;
-									debugString += " * "+currNum+"*2";
+									stepDebugString += " * "+currRep+"*2";
 								}
 								else if (extraData[inds[i][j]] == "3") {
 									result *= currNum*3;
-									debugString += " * "+currNum+"*3";
+									stepDebugString += " * "+currRep+"*3";
 								}
 								else if (extraData[inds[i][j]] == "/") {
 									result *= currNum/2;
-									debugString += " * "+currNum+"/2";
+									stepDebugString += " * "+currRep+"/2";
 								}
 								else {
 									// Normal operation
 									result *= currNum;
-									debugString += " * "+currNum;
+									stepDebugString += " * "+currRep;
 								}
 							}
 						}
-						debugString = "(" + debugString + ")";
-					}
-					else if (values[1+i] == 4) { // Division
-						for (let j = 0; j < nums[i].length; j++) {
-							currNum = nums[i][j];
+						else if (currValue == 4) { // Division
 							if (extraData[inds[i][j]] != "X") {
-								if (fracs[i][j] == 1) currNum = currNum/3;
+								if (fracs[i][j] == 1) {
+									currNum = currNum/3;
+									currRep = currRep + "/3";
+								}
 								if (extraData[inds[i][j]] == "2") {
 									result /= currNum*2;
-									debugString += " / ("+currNum+"*2)";
+									stepDebugString += " / ("+currRep+"*2)";
 								}
 								else if (extraData[inds[i][j]] == "3") {
 									result /= currNum*3;
-									debugString += " / ("+currNum+"*3)";
+									stepDebugString += " / ("+currRep+"*3)";
 								}
 								else if (extraData[inds[i][j]] == "/") {
 									result /= currNum/2;
-									debugString += " / ("+currNum+"/2)";
+									stepDebugString += " / ("+currRep+"/2)";
 								}
 								else {
 									// Normal operation
 									result /= currNum;
-									debugString += " / "+currNum;
+									stepDebugString += " / "+currRep;
 								}
 							}
 						}
-						debugString = "(" + debugString + ")";
 					}
-					if (values[0] != 0 && values[i+1] == values[0]) { // square... or swap... or something else
+					stepDebugString = "(" + stepDebugString + ")";
+					// This doesn't even make sense if there is more than one color in a ring
+					if (values[0] != 0 && values[i+1][0] == values[0]) { // square... or swap... or something else
 						// Square / diamond
 						if (centerState == "square") {
 							result *= result;
-							debugString = "(" + debugString + ")^2";
+							stepDebugString = "(" + stepDebugString + ")^2";
 						}
 						else if (centerState == "diamond") {
 							// Reverse the number... This converts 23 -> 32 but also works for 3-digit numbers, not sure if that's ever used in the puzzle though
 							result = parseInt(result.toString().split('').reverse().join(''), 10);
-							debugString = "swap(" + debugString + ")";
+							stepDebugString = "swap(" + stepDebugString + ")";
 						}
 						// Rounding
 						if (roundState == "round1") {
 							// TODO: "round to the nearest 1 digit number"... not sure what this means if the current value is 2 or 3 digits
 							result = Math.round(result);
-							debugString = "round1(" + debugString + ")";
+							stepDebugString = "round1(" + stepDebugString + ")";
 						}
 						else if (roundState == "round2") {
 							// TODO: "round to the nearest 2 digit number"... like nearest multiple of 10?
 							result = Math.round(result/10)*10;
-							debugString = "round2(" + debugString + ")";
+							stepDebugString = "round2(" + stepDebugString + ")";
 						}
 						else if (roundState == "round3") {
 							// TODO: "round to the nearest 3 digit number"... like nearest multiple of 100?
 							result = Math.round(result/100)*100;
-							debugString = "round3(" + debugString + ")";
+							stepDebugString = "round3(" + stepDebugString + ")";
 						}
 						// Yet another square/diamond
 						if (outerCenterState == "square") {
 							result *= result;
-							debugString = "(" + debugString + ")^2";
+							stepDebugString = "(" + stepDebugString + ")^2";
 						}
 						else if (outerCenterState == "diamond") {
 							result = parseFloat(result.toString().split('').reverse().join(''), 10);
-							debugString = "swap(" + debugString + ")";
+							stepDebugString = "swap(" + stepDebugString + ")";
 						}
+					}
+					if (stepDebugString != "("+result+")") {
+						document.getElementById('step'+i).textContent = "Step "+(i+1)+": "+ stepDebugString + " = " + result;
 					}
 				}
 				var info = "";
 				if (result > 20 || result <= 0 || result % 1 != 0) info = "... uh that doesn't seem right";
-				document.getElementById('result').textContent = debugString + " = " + result + " " + info;
+				document.getElementById('result').textContent = "Final answer = " + result + " " + info;
 				
             } else {
                 document.getElementById('result').textContent = 'Please ensure each segment is highlighted properly.';
