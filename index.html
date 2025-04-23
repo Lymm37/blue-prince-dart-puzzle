@@ -588,6 +588,10 @@
 							stepDebugString = "swap(" + stepDebugString + ")";
 						}
 					}
+					// Fix tiny rounding error from 1/3 operations
+					if (Math.abs(result - Math.round(result)) < 0.001) {
+						result = Math.round(result);
+					}
 					if (stepDebugString != "("+result+")") {
 						document.getElementById('step'+i).textContent = "Step "+(i+1)+": "+ stepDebugString + " = " + result;
 					}
