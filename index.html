@@ -557,7 +557,8 @@
 					}
 					//stepDebugString = "(" + stepDebugString + ")";
 					// This doesn't even make sense if there is more than one color in a ring
-					if (values[0] != 0 && values[i+1][0] == values[0]) { // square... or swap... or something else
+					// But apparently that does happen...
+					if (values[0] != 0 && values[i+1].includes(values[0])) { // square... or swap... or something else
 						// Square / diamond
 						if (centerState == "square") {
 							result *= result;
